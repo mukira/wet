@@ -37,6 +37,7 @@ class BusinessDatesController extends Controller
             // track weekends and holidays
             $weekendDays = 0;
             $holidayDays = 0;
+            $totalDates = [];
 
             // 1 day interval
             $diff1Day = new \DateInterval('P1D');
@@ -47,18 +48,24 @@ class BusinessDatesController extends Controller
                 // isHoliday
                 if ($this->isHolidayDay($initialDate)) {
                     $holidayDays++;
+                    if (!in_array($initialDate, $totalDates)) {
+                        array_push($totalDates, $initialDate->format('Y-m-d'));
+                    }
                 }
 
                 // isWeekend
                 else if ($this->isWeekendDay($initialDate)) {
                     $weekendDays++;
+                    if (!in_array($initialDate, $totalDates)) {
+                        array_push($totalDates, $initialDate->format('Y-m-d'));
+                    }
                 }
 
                 // isWeekDay
                 else if ($this->isWeekDay($initialDate)) {
                     $delay--;
                 }
-                
+
                 if ($delay != 0) {
                     $initialDate->add($diff1Day);
                 }
@@ -67,19 +74,15 @@ class BusinessDatesController extends Controller
             // response payload
             $results = [
                 'businessDate' => $initialDate->format('Y-m-d\TH:i:s\Z'),
-                'totalDays' => ($holidayDays + $weekendDays),
+                'totalDays' => count($totalDates),
                 'holidayDays' => $holidayDays,
-                'weekendDays' => $weekendDays
+                'weekendDays' => $weekendDays,
             ];
             return $this->respond(true, $results, $request);
         } catch (\Exception $e) {
             \Log::error($e);
             return $this->respond(false, [ 'errors' => $e->getMessage() ], $request);
         }
-    }
-
-    public function isBusinessDay(Request $request) {
-
     }
 
 }
